@@ -4,18 +4,18 @@ const app = express();
 
 app.use(express.json());
 
-let courses = [
-    { id: 1, name: 'Math'},
-    { id: 2, name: 'English'},
-    { id: 3, name: 'Biology'}
-];
+let { course } =  require('./models');
 
 app.get('/', (req, res) => {
-    res.send('hello world');
+    res.send('Api is UP!');
 });
 
 app.get('/api/courses', (req, res) => {
-    res.send(courses);
+    course.findAll().then((courses) => {
+        res.status(200).send(courses);
+    }).catch((err) => {
+        console.log(err);
+    });
 });
 
 app.post('/api/courses', (req, res) => {
@@ -23,13 +23,16 @@ app.post('/api/courses', (req, res) => {
     if(error) {
         return res.status(400).send(error.details[0].message);
     }
-    const course = {
-        id: courses.length + 1,
-        name: req.body.name
-    };
+    try {
+        course.update({
+            name: req.body.name
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('Internal Server Error');
+    }
 
-    courses.push(course);
-    res.send(course)
+    res.status(200).send('Update successful');
 })
 
 app.put('/api/courses/:id', (req, res) => {
@@ -37,19 +40,16 @@ app.put('/api/courses/:id', (req, res) => {
     if (error) {
         return res.status(400).send(error.details[0].message);
     }
-    let course = courses.find(c => c.id === parseInt(req.params.id))
-    if (!course) return res.status(404).send('Requested resource was not found');
-    course.name = req.body.name;
-    res.send(course);
+    course.findAll().then((courses) => {
+        res.status(200).send(courses);
+    }).catch((err) => {
+        console.log(err);
+    });
 });
 
 app.delete('/api/courses/:id', (req, res) => {
-    let course = courses.find(c => c.id === parseInt(req.params.id));
-    if(!course) return res.status(404).send('Requested resource was not found');
-
-    const index = courses.indexOf(course);
-    courses.splice(index, 1);
-    res.send(course);
+    course.destroy({ where: { name : req.params.id } });
+    res.send('delete');
 })
 
 function validateCourse(course)
@@ -62,10 +62,16 @@ function validateCourse(course)
 }
 
 app.get('/api/courses/:id', (req, res) => {
-    let course = courses.find(c=> c.id === parseInt(req.params.id))
-    if(!course) return res.status(404).send('Requested resource was not found');
-    //res.send(req.params.query.sortBy);
+    course.findAll({where:{id:req.params.id}}).then((courses) => {
+        res.status(200).send(courses);
+    }).catch((err) => {
+        console.log(err);
+    });
 });
 
+const db = require('./models');
+
 const port = process.env.PORT || 3002;
-app.listen(port, () => {console.log(`Listening on port ${port}`)});
+db.sequelize.sync().then((req) => {
+    app.listen(port, () => {console.log(`Listening on port ${port}`)});
+});
