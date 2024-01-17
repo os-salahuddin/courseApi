@@ -76,11 +76,13 @@ function validateCourse(course)
 }
 
 app.get('/api/courses/:id', (req, res) => {
-    course.findAll({where:{id:req.params.id}}).then((courses) => {
-        res.status(200).send(courses);
-    }).catch((err) => {
-        console.log(err);
-    });
+    try {
+        const course = course.findAll({ where: { id: req.params.id } });
+        res.status(200).send(course);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 const db = require('./models');
