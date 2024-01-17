@@ -75,9 +75,9 @@ function validateCourse(course)
     return Joi.validate(course, schema);
 }
 
-app.get('/api/courses/:id', (req, res) => {
+app.get('/api/courses/:id', async (req, res) => {
     try {
-        const course = course.findAll({ where: { id: req.params.id } });
+        const course = await course.findAll({ where: { id: req.params.id } });
         res.status(200).send(course);
     } catch (err) {
         console.error(err);
